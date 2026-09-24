@@ -359,6 +359,61 @@
       border-radius: 12px;
       cursor: pointer;
     }
+
+    @media (max-width: 600px) {
+      body {
+        align-items: flex-start;
+        padding: 10px;
+      }
+
+      .container {
+        width: 100%;
+        padding: 20px 16px;
+        border-radius: 22px;
+      }
+
+      .top-bar {
+        margin-bottom: 10px;
+      }
+
+      .theme-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      #mainFormScreen {
+        min-width: 0;
+      }
+
+      .header {
+        margin-bottom: 18px;
+      }
+
+      .header h1 {
+        font-size: 22px;
+      }
+
+      .time-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+      }
+
+      .food-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .food-item label {
+        min-height: 48px;
+        padding: 10px 6px;
+        font-size: 12px;
+      }
+
+      .input-field,
+      .submit-btn {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body data-theme="dark">
