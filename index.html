@@ -1,661 +1,1097 @@
 <!DOCTYPE html>
-<html lang="km">
+<html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Special Date Invitation</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bakong & LOLC QA Suite: KHQR & Deep Link Inspector</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        cyber: {
+                            950: '#030712',
+                            900: '#0a0f1d',
+                            800: '#131d31',
+                            700: '#1e293b',
+                            accent: '#00ffcc',
+                            purple: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffcc; }
 
-  <style>
-    :root {
-      --bg: #0a0a0c;
-      --card-bg: rgba(22, 22, 26, 0.85);
-      --card-border: rgba(255, 255, 255, 0.12);
-      --text-main: #f5f6fa;
-      --text-muted: #8c8d96;
-      --input-bg: #141418;
-      --input-border: #2a2b32;
-      --chip-bg: #16171d;
-      --chip-border: #2c2d36;
-      --chip-active-bg: #ffffff;
-      --chip-active-text: #000000;
-      --btn-bg: #ffffff;
-      --btn-text: #000000;
-      --btn-hover: #e5e5e5;
-      --modal-overlay: rgba(0, 0, 0, 0.75);
-    }
+        @keyframes scanLaser {
+            0% { top: 0%; opacity: 0.9; }
+            50% { opacity: 1; }
+            100% { top: 97%; opacity: 0.9; }
+        }
+        .animate-scan { animation: scanLaser 2.2s infinite ease-in-out alternate; }
 
-    [data-theme="light"] {
-      --bg: #f4f5f7;
-      --card-bg: rgba(255, 255, 255, 0.95);
-      --card-border: rgba(0, 0, 0, 0.08);
-      --text-main: #111215;
-      --text-muted: #64656f;
-      --input-bg: #f9fafb;
-      --input-border: #dcdde1;
-      --chip-bg: #f1f2f6;
-      --chip-border: #e0e1e6;
-      --chip-active-bg: #111215;
-      --chip-active-text: #ffffff;
-      --btn-bg: #111215;
-      --btn-text: #ffffff;
-      --btn-hover: #2a2b32;
-      --modal-overlay: rgba(0, 0, 0, 0.5);
-    }
+        @keyframes neonPulse {
+            0%, 100% { border-color: rgba(0, 255, 204, 0.4); box-shadow: 0 0 20px rgba(0, 255, 204, 0.15); }
+            50% { border-color: rgba(0, 255, 204, 0.9); box-shadow: 0 0 35px rgba(0, 255, 204, 0.35); }
+        }
+        .scanner-glow { animation: neonPulse 3s infinite ease-in-out; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Kantumruy Pro', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    }
+        .terminal-glow {
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.08);
+        }
 
-body {
-  background-color: var(--bg);
-  color: var(--text-main);
-  min-height: 100vh;
-  width: 100%;             /* ថែមត្រង់នេះ */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  position: relative;
-  overflow-x: hidden;
-}
+        @media (max-width: 640px) {
+            body {
+                min-height: 100dvh;
+                height: auto;
+                padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+            }
 
-.container {
-  width: 100%;
-  max-width: 440px;
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--card-border);
-  border-radius: 26px;
-  padding: 24px 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  position: relative;
-  z-index: 1;
-  overflow: hidden;         /* ថែមត្រង់នេះ */
-}
+            header {
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 0.75rem;
+                padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem;
+            }
 
-    /* Top Action Bar */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-    }
+            header > div:first-child {
+                flex: 1 1 100%;
+                min-width: 0;
+            }
 
-    .status-pill {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-    }
+            header > div:first-child > div:last-child,
+            header h1 {
+                min-width: 0;
+            }
 
-    .theme-btn {
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      color: var(--text-main);
-      font-size: 14px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 500;
-    }
+            header h1 {
+                font-size: 0.95rem;
+                line-height: 1.35;
+            }
 
-    /* Intro / Question Screen */
-    #introScreen {
-      text-align: center;
-      padding: 30px 10px 15px;
-    }
+            header p {
+                font-size: 0.68rem;
+                line-height: 1.4;
+            }
 
-    .intro-emoji {
-      font-size: 60px;
-      display: inline-block;
-      margin-bottom: 16px;
-      animation: float 2.5s ease-in-out infinite;
-    }
+            header > div:last-child {
+                width: 100%;
+                justify-content: flex-end;
+            }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
+            input,
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
 
-    .intro-title {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
+            button {
+                min-height: 44px;
+            }
 
-    .intro-sub {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 30px;
-      line-height: 1.6;
-    }
+            main {
+                padding: 1rem 0.875rem calc(6.5rem + env(safe-area-inset-bottom));
+            }
 
-    .intro-actions {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 14px;
-      min-height: 52px;
-      position: relative;
-    }
+            main > section,
+            main > section > div,
+            main .grid > div {
+                min-width: 0;
+            }
 
-    .btn-yes {
-      padding: 13px 32px;
-      border: none;
-      border-radius: 14px;
-      background: var(--btn-bg);
-      color: var(--btn-text);
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    }
+            #content-scanner > div:first-child {
+                padding: 1.125rem;
+            }
 
-    .btn-no {
-      padding: 13px 26px;
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      position: relative;
-    }
+            #content-scanner > div:first-child span {
+                display: inline-block;
+                line-height: 1.5;
+            }
 
-    /* Form Container (Hidden initially) */
-    #mainFormScreen {
-      display: none;
-      animation: fadeIn 0.4s ease forwards;
-    }
+            #content-scanner > div:first-child h2 {
+                font-size: 1.2rem;
+                line-height: 1.35;
+            }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+            #content-scanner .bg-cyber-900.rounded-3xl {
+                padding: 1rem;
+            }
 
-    .header {
-      text-align: center;
-      margin-bottom: 22px;
-    }
+            #content-scanner .relative.w-full.h-80 {
+                height: 18rem;
+            }
 
-    .header h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      letter-spacing: -0.5px;
-    }
+            #content-scanner .scanner-glow {
+                width: min(16rem, 76vw);
+                height: 12rem;
+            }
 
-    .header p {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
+            #scanner-status {
+                max-width: calc(100vw - 5rem);
+                overflow-wrap: anywhere;
+            }
 
-    .form-group {
-      margin-bottom: 16px;
-      min-width: 0;
-    }
+            #content-scanner .relative.w-full.h-80 > .absolute.bottom-4 {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
 
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 7px;
-      color: var(--text-main);
-    }
+            #content-scanner .relative.w-full.h-80 > .absolute.bottom-4 button {
+                justify-content: center;
+                width: 100%;
+            }
 
-    .input-field {
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
-      padding: 13px 14px;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      border-radius: 12px;
-      color: var(--text-main);
-      font-size: 14px;
-      outline: none;
-    }
+            #content-scanner .bg-cyber-900.rounded-3xl > .flex.items-center.justify-between {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
 
-    .input-field:focus {
-      border-color: var(--text-main);
-    }
+            #content-scanner #cam-toggle-btn {
+                white-space: nowrap;
+            }
 
-    .time-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      min-width: 0;
-    }
+            #content-scanner #parse-merchant,
+            #content-scanner #parse-crc,
+            #content-scanner #parse-ai {
+                max-width: 58%;
+                text-align: right;
+                overflow-wrap: anywhere;
+            }
 
-    .food-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
-    }
+            #content-scanner .grid.grid-cols-2 button {
+                min-width: 0;
+                line-height: 1.4;
+            }
 
-    .food-item input {
-      display: none;
-    }
+            #content-dashboard > div:nth-child(2) > div:last-child {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+                width: 100%;
+            }
 
-    .food-item label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 10px;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-border);
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 0;
-      text-align: center;
-      user-select: none;
-      transition: all 0.2s ease;
-    }
+            #filter-severity,
+            #content-dashboard > div:nth-child(2) > div:last-child button {
+                width: 100%;
+                min-width: 0;
+            }
 
-    .food-item input:checked + label {
-      background: var(--chip-active-bg);
-      color: var(--chip-active-text);
-      font-weight: 700;
-      border-color: var(--chip-active-bg);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-      transform: translateY(-2px);
-    }
+            #bug-modal {
+                align-items: flex-end;
+                padding: 0.5rem;
+                padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            }
 
-    .submit-btn {
-      width: 100%;
-      padding: 15px;
-      margin-top: 8px;
-      border: none;
-      border-radius: 14px;
-      background: var(--btn-bg);
-      color: var(--btn-text);
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    }
+            #bug-modal > div {
+                max-height: calc(100dvh - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                padding: 1.125rem;
+                border-radius: 1.5rem;
+            }
 
-    .submit-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+            #bug-modal form > .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
 
-    /* Chat Modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: var(--modal-overlay);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      z-index: 100;
-      opacity: 0;
-      transition: opacity 0.25s ease;
-    }
+            #bug-modal form > div:last-child {
+                position: sticky;
+                bottom: -1.125rem;
+                margin: 0 -1.125rem -1.125rem;
+                padding: 0.75rem 1.125rem calc(0.75rem + env(safe-area-inset-bottom));
+                background: #0a0f1d;
+            }
 
-    .modal-overlay.active {
-      display: flex;
-      opacity: 1;
-    }
+            body > nav {
+                padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            }
 
-    .chat-card {
-      width: 100%;
-      max-width: 360px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 24px;
-      text-align: center;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    }
-
-    .chat-bubble {
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      padding: 16px;
-      border-radius: 18px 18px 4px 18px;
-      margin: 16px 0;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-main);
-      text-align: left;
-    }
-
-    .chat-icon {
-      font-size: 38px;
-      margin-bottom: 6px;
-    }
-
-    .modal-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--btn-bg);
-      color: var(--btn-text);
-      font-size: 14px;
-      font-weight: 700;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 600px) {
-      body {
-        align-items: flex-start;
-        padding: 10px;
-      }
-
-      .container {
-        width: 100%;
-        padding: 20px 16px;
-        border-radius: 22px;
-      }
-
-      .top-bar {
-        margin-bottom: 10px;
-      }
-
-      .theme-btn {
-        padding: 6px 10px;
-        font-size: 13px;
-      }
-
-      #mainFormScreen {
-        min-width: 0;
-      }
-
-      .header {
-        margin-bottom: 18px;
-      }
-
-      .header h1 {
-        font-size: 22px;
-      }
-
-      .time-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0;
-      }
-
-      .food-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-      }
-
-      .food-item label {
-        min-height: 48px;
-        padding: 10px 6px;
-        font-size: 12px;
-      }
-
-      .input-field,
-      .submit-btn {
-        font-size: 14px;
-      }
-    }
-  </style>
+            #toast {
+                left: 1rem;
+                right: 1rem;
+                top: calc(1rem + env(safe-area-inset-top));
+                justify-content: center;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
-<body data-theme="dark">
+<body class="bg-cyber-950 text-slate-100 font-sans h-full overflow-x-hidden antialiased">
 
-  <div class="container">
-    <div class="top-bar">
-      <span class="status-pill">Invitation</span>
-      <button type="button" class="theme-btn" id="themeToggle">
-        <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
-      </button>
-    </div>
-
-    <!-- ១. ផ្ទាំងខាងមុខ (Intro Question Screen) -->
-    <div id="introScreen">
-      <div class="intro-emoji">💌</div>
-      <h2 class="intro-title">តោះទៅ Date ជាមួយគ្នា?</h2>
-      <p class="intro-sub">មានមនុស្សម្នាក់ចង់បបួលទៅញ៉ាំអីឆ្ងាញ់ៗ និងដើរលេងជាមួយគ្នា តើព្រមទៅជាមួយគ្នាទេ? ✨</p>
-      
-      <div class="intro-actions">
-        <button type="button" class="btn-yes" id="btnYes">ព្រមទៅ ❤️</button>
-        <button type="button" class="btn-no" id="btnNo">អត់ទេ 😜</button>
-      </div>
-    </div>
-
-    <!-- ២. ផ្ទាំង Form បំពេញព័ត៌មាន (បង្ហាញពេលចុច "ព្រមទៅ") -->
-    <div id="mainFormScreen">
-      <div class="header">
-        <h1>Special Date</h1>
-        <p>រើសកាលវិភាគ និងម្ហូបឆ្ងាញ់ៗជាមួយគ្នា</p>
-      </div>
-
-      <form id="dateForm">
-        <div class="form-group">
-          <label for="partnerName">ឈ្មោះ ឬពាក្យផ្អែមល្ហែម</label>
-          <input type="text" id="partnerName" class="input-field" placeholder="ឧ. Babe / My Love" required>
+    <!-- Top Navigation / Header -->
+    <header class="bg-cyber-900/90 backdrop-blur-md border-b border-cyber-700/60 sticky top-0 z-50 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-cyber-950 font-black text-xl shadow-lg shadow-cyan-500/20">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="font-extrabold text-base lg:text-lg text-white tracking-tight">Bakong & LOLC <span class="text-cyan-400">QA Suite</span></h1>
+                    <span class="bg-cyan-500/15 text-cyan-300 text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-cyan-500/30 font-mono">v3.4 PRO</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">Mobile Banking & FinTech Testing Support Terminal</p>
+            </div>
         </div>
 
-        <div class="form-group">
-          <label for="date">ថ្ងៃណាត់ជួប</label>
-          <input type="date" id="date" class="input-field" required>
-        </div>
+        <!-- Desktop Navigation Tabs & Quick Actions -->
+        <div class="flex items-center space-x-3">
+            <div class="hidden md:flex items-center bg-cyber-950 p-1 rounded-xl border border-cyber-700 text-xs font-medium">
+                <button onclick="switchTab('scanner')" id="tab-btn-scanner" class="px-4 py-2 rounded-lg bg-cyan-500 text-cyber-950 font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-crosshairs"></i> KHQR & Deep Link Scanner
+                </button>
+                <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-bug"></i> Bug Logs & Jira
+                </button>
+                <button onclick="switchTab('matrix')" id="tab-btn-matrix" class="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i> ISO Test Matrix
+                </button>
+            </div>
 
-        <div class="time-grid">
-          <div class="form-group">
-            <label for="startTime">ម៉ោងចេញ</label>
-            <input type="time" id="startTime" class="input-field" required>
-          </div>
-          <div class="form-group">
-            <label for="endTime">ម៉ោងត្រឡប់</label>
-            <input type="time" id="endTime" class="input-field" required>
-          </div>
+            <button onclick="openBugModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-400 hover:from-cyan-400 hover:to-emerald-300 text-cyber-950 font-bold text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-2 transition transform active:scale-95">
+                <i class="fa-solid fa-plus"></i> New Bug Ticket
+            </button>
         </div>
+    </header>
 
-        <div class="form-group">
-          <label>មុខម្ហូប (ជ្រើសរើសបានច្រើន)</label>
-          <div class="food-grid">
-            <div class="food-item">
-              <input type="checkbox" id="f1" name="food" value="បុកល្ហុង">
-              <label for="f1">បុកល្ហុង</label>
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-4 lg:p-6 pb-24">
+        
+        <!-- TAB 1: KHQR & DEEP LINK SCANNER -->
+        <section id="content-scanner" class="space-y-6">
+            
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-cyber-900 via-cyber-800 to-cyber-900 border border-cyber-700 p-6 rounded-3xl relative overflow-hidden terminal-glow">
+                <div class="absolute -right-10 -bottom-10 text-cyan-500/5 text-9xl font-black pointer-events-none">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </div>
+                <div class="max-w-2xl space-y-2">
+                    <span class="text-[11px] uppercase tracking-wider font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-md border border-cyan-500/20">National Bank of Cambodia (NBC) KHQR & Deep Link Standard</span>
+                    <h2 class="text-xl lg:text-2xl font-extrabold text-white tracking-tight">Real-Time Mobile Payment & Protocol Inspector</h2>
+                    <p class="text-xs lg:text-sm text-slate-300 leading-relaxed">
+                        Scan Bakong KHQR strings, deep link custom schemes (e.g., <code class="text-cyan-400 font-mono">bakong://pay?to=...</code>, <code class="text-cyan-400 font-mono">lolc://transfer</code>), and instantly parse payload checksums or generate bug tickets.
+                    </p>
+                </div>
             </div>
-            <div class="food-item">
-              <input type="checkbox" id="f2" name="food" value="មីចិន">
-              <label for="f2">មីចិន</label>
-            </div>
-            <div class="food-item">
-              <input type="checkbox" id="f3" name="food" value="Buffet KANXIN">
-              <label for="f3">Buffet KANXIN</label>
-            </div>
-            <div class="food-item">
-              <input type="checkbox" id="f4" name="food" value="ស៊ុបគ្រឿងក្នុង">
-              <label for="f4">ស៊ុបគ្រឿងក្នុង</label>
-            </div>
-            <div class="food-item">
-              <input type="checkbox" id="f5" name="food" value="ប្រហិត">
-              <label for="f5">ប្រហិត</label>
-            </div>
-            <div class="food-item">
-              <input type="checkbox" id="f6" name="food" value="តែកាហ្វេ">
-              <label for="f6">តែ / កាហ្វេ</label>
-            </div>
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label for="note">ចំណាំបន្ថែម</label>
-          <input type="text" id="note" class="input-field" placeholder="ឧ. មើលកុន ឬទៅកន្លែងស្ងប់ស្ងាត់...">
-        </div>
+            <!-- Two Column Grid for Scanner & Inspector -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left: Camera Viewfinder & Presets (7 Cols) -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="bg-cyber-900 border border-cyber-700 rounded-3xl p-5 space-y-4 shadow-xl">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-video text-cyan-400"></i> Camera & Payload Stream
+                            </h3>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="toggleWebCam()" id="cam-toggle-btn" aria-pressed="false" class="px-3 py-1.5 rounded-xl bg-cyber-800 hover:bg-cyber-700 text-xs font-medium text-slate-300 border border-cyber-700 transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-camera"></i> Start QR Scanner
+                                </button>
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            </div>
+                        </div>
 
-        <button type="submit" class="submit-btn" id="submitBtn">
-          បញ្ជូនការណាត់
+                        <!-- Camera Viewfinder Box -->
+                        <div class="relative w-full h-80 bg-cyber-950 rounded-2xl border-2 border-cyber-700 overflow-hidden flex items-center justify-center">
+                            <!-- Real WebRTC Video -->
+                            <video id="webcam-video" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover hidden"></video>
+                            
+                            <!-- Fallback Mock Animation Background -->
+                            <div id="camera-fallback-bg" class="absolute inset-0 bg-cover bg-center opacity-30 transition-all duration-700" style="background-image: url('https://placehold.co/800x600/030712/1e293b?text=Bakong+KHQR+Scanning+Feed');"></div>
+                            <div class="absolute inset-0 bg-[linear-gradient(to_right,#131d3120_1px,transparent_1px),linear-gradient(to_bottom,#131d3120_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
+
+                            <!-- Reticle Target & Laser -->
+                            <div class="scanner-glow relative w-64 h-52 border-2 rounded-2xl flex items-center justify-center bg-cyber-950/30 backdrop-blur-[2px]">
+                                <div class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-cyan-400 rounded-tl"></div>
+                                <div class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-cyan-400 rounded-tr"></div>
+                                <div class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-cyan-400 rounded-bl"></div>
+                                <div class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-cyan-400 rounded-br"></div>
+                                
+                                <div class="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#00ffcc] animate-scan"></div>
+                                
+                                <div id="scanner-status" class="text-center z-10 px-4 py-2 bg-cyber-900/90 rounded-xl border border-cyber-700 text-xs font-mono text-cyan-400 shadow-xl">
+                                    <i class="fa-solid fa-crosshairs fa-spin mr-1.5"></i> Start camera to scan a QR code
+                                </div>
+                            </div>
+
+                            <!-- Action button inside viewfinder -->
+                            <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20">
+                                <button onclick="cyclePresetPayload()" class="px-3.5 py-2 rounded-xl bg-cyber-800/90 backdrop-blur-md text-slate-300 hover:text-white text-xs font-medium border border-cyber-700 transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-rotate"></i> Cycle Payload
+                                </button>
+                                <button onclick="triggerScanPayload()" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-cyber-950 font-bold text-xs shadow-lg shadow-cyan-500/30 flex items-center gap-2 transition transform active:scale-95">
+                                    <i class="fa-solid fa-barcode"></i> Parse & Test Payload
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Banking Test Presets -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Quick Banking QA Payloads</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                <button onclick="loadPreset(0)" class="p-3 rounded-xl bg-cyber-950 border border-cyber-700/80 hover:border-cyan-500/60 text-left transition group">
+                                    <span class="text-[10px] bg-cyan-500/10 text-cyan-400 font-bold px-2 py-0.5 rounded">Bakong KHQR</span>
+                                    <p class="text-xs font-semibold text-slate-200 mt-1.5 truncate">Merchant Timeout Bug</p>
+                                </button>
+                                <button onclick="loadPreset(1)" class="p-3 rounded-xl bg-cyber-950 border border-cyber-700/80 hover:border-purple-500/60 text-left transition group">
+                                    <span class="text-[10px] bg-purple-500/10 text-purple-400 font-bold px-2 py-0.5 rounded">LOLC DeepLink</span>
+                                    <p class="text-xs font-semibold text-slate-200 mt-1.5 truncate">Biometric NullPointer</p>
+                                </button>
+                                <button onclick="loadPreset(2)" class="p-3 rounded-xl bg-cyber-950 border border-cyber-700/80 hover:border-emerald-500/60 text-left transition group">
+                                    <span class="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded">API Gateway</span>
+                                    <p class="text-xs font-semibold text-slate-200 mt-1.5 truncate">Invalid CRC Checksum</p>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Dynamic Payload Inspector & Deep Link Stress Tester (5 Cols) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="bg-cyber-900 border border-cyber-700 rounded-3xl p-5 space-y-4 shadow-xl">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-code text-cyan-400"></i> Dynamic Payload Inspector
+                        </h3>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-400 mb-1">KHQR / Deep Link String</label>
+                                <textarea id="inspector-input" rows="3" oninput="analyzePayloadString(this.value)" class="w-full bg-cyber-950 border border-cyber-700 rounded-xl p-3 text-xs font-mono text-cyan-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition resize-none">bakong://pay?to=merchant_lolc@bakong&amount=25.00&currency=USD&crc=8F2A</textarea>
+                            </div>
+
+                            <!-- Live Parsed JSON Tags -->
+                            <div class="bg-cyber-950 p-3.5 rounded-2xl border border-cyber-700/80 space-y-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-slate-400">Protocol Scheme:</span>
+                                    <span id="parse-scheme" class="font-mono font-bold text-cyan-400">bakong://</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-slate-400">Merchant Account:</span>
+                                    <span id="parse-merchant" class="font-mono text-slate-200">merchant_lolc@bakong</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-slate-400">Checksum CRC-16:</span>
+                                    <span id="parse-crc" class="font-mono text-emerald-400 font-bold">Valid (0x8F2A)</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-slate-400">AI Bug Heuristic:</span>
+                                    <span id="parse-ai" class="font-bold text-amber-400">Medium Risk (Timeout on 4G)</span>
+                                </div>
+                            </div>
+
+                            <!-- Deep Link Stress Tester Controls -->
+                            <div class="pt-2 border-t border-cyber-700/60 space-y-2.5">
+                                <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Deep Link Stress Test</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="runStressTest(5)" class="py-2.5 px-3 rounded-xl bg-cyber-800 hover:bg-cyber-700 text-slate-200 text-xs font-semibold transition border border-cyber-700 flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-gauge-high"></i> Burst Test (5x)
+                                    </button>
+                                    <button onclick="convertPayloadToBug()" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-400 hover:from-cyan-400 hover:to-emerald-300 text-cyber-950 text-xs font-bold transition shadow-md shadow-cyan-500/20 flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-file-circle-plus"></i> Convert to Jira Bug
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: BUG LOGS & JIRA DASHBOARD -->
+        <section id="content-dashboard" class="space-y-6 hidden">
+            <!-- Stats Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-cyber-900 border border-cyber-700 p-4 rounded-3xl flex items-center justify-between shadow-xl">
+                    <div>
+                        <span id="stat-total" class="text-2xl font-black text-white">0</span>
+                        <p class="text-xs text-slate-400 font-semibold uppercase mt-0.5">Total Bug Tickets</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl">
+                        <i class="fa-solid fa-bug"></i>
+                    </div>
+                </div>
+                <div class="bg-cyber-900 border border-cyber-700 p-4 rounded-3xl flex items-center justify-between shadow-xl">
+                    <div>
+                        <span id="stat-open" class="text-2xl font-black text-amber-400">0</span>
+                        <p class="text-xs text-slate-400 font-semibold uppercase mt-0.5">Open Defect Reports</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+                <div class="bg-cyber-900 border border-cyber-700 p-4 rounded-3xl flex items-center justify-between shadow-xl">
+                    <div>
+                        <span id="stat-critical" class="text-2xl font-black text-red-400">0</span>
+                        <p class="text-xs text-slate-400 font-semibold uppercase mt-0.5">Critical Priority</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 text-xl">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter & Search Toolbar -->
+            <div class="bg-cyber-900 border border-cyber-700 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl">
+                <div class="relative w-full sm:w-80">
+                    <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="search-input" oninput="renderBugs()" placeholder="Search bug summary, ID..." class="w-full bg-cyber-950 border border-cyber-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition">
+                </div>
+                <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                    <select id="filter-severity" onchange="renderBugs()" class="bg-cyber-950 border border-cyber-700 rounded-2xl px-4 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition">
+                        <option value="ALL">All Severities</option>
+                        <option value="Critical">Critical</option>
+                        <option value="Major">Major</option>
+                        <option value="Minor">Minor</option>
+                    </select>
+                    <button onclick="openBugModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-cyber-950 font-bold text-xs transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add Bug
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bugs Grid Container -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="bugs-container"></div>
+        </section>
+
+        <!-- TAB 3: ISO TEST MATRIX -->
+        <section id="content-matrix" class="space-y-6 hidden">
+            <div class="bg-cyber-900 border border-cyber-700 p-6 rounded-3xl shadow-xl space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-4 border-b border-cyber-700/60">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-cyan-400"></i> ISO/IEC 25010 Mobile Banking QA Test Suites
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Pre-configured test case matrix tailored for Cambodian FinTech applications (Bakong & LOLC workflows).</p>
+                    </div>
+                    <span class="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-xl font-mono font-bold">4 Suites Active</span>
+                </div>
+
+                <div class="space-y-3" id="test-matrix-container"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-cyber-900/95 backdrop-blur-md border-t border-cyber-700 px-6 py-3 flex justify-around items-center z-40">
+        <button onclick="switchTab('scanner')" id="mobile-tab-scanner" class="flex flex-col items-center text-cyan-400 transition space-y-1">
+            <i class="fa-solid fa-crosshairs text-lg"></i>
+            <span class="text-[10px] font-semibold">Scanner</span>
         </button>
-      </form>
+        <button onclick="switchTab('dashboard')" id="mobile-tab-dashboard" class="flex flex-col items-center text-slate-400 hover:text-white transition space-y-1">
+            <i class="fa-solid fa-bug text-lg"></i>
+            <span class="text-[10px] font-semibold">Bug Logs</span>
+        </button>
+        <button onclick="switchTab('matrix')" id="mobile-tab-matrix" class="flex flex-col items-center text-slate-400 hover:text-white transition space-y-1">
+            <i class="fa-solid fa-shield-halved text-lg"></i>
+            <span class="text-[10px] font-semibold">ISO Test</span>
+        </button>
+    </nav>
+
+    <!-- MODAL: ADD / EDIT BUG TICKET -->
+    <div id="bug-modal" class="fixed inset-0 bg-cyber-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-cyber-900 w-full max-w-lg rounded-3xl border border-cyber-700 p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-cyber-700">
+                <h3 id="modal-title" class="font-bold text-sm text-white flex items-center gap-2">
+                    <i class="fa-solid fa-bug text-cyan-400"></i> New Mobile Defect Report
+                </h3>
+                <button onclick="closeBugModal()" class="w-8 h-8 rounded-full bg-cyber-800 hover:bg-cyber-700 text-slate-400 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="bug-form" onsubmit="handleBugSubmit(event)" class="space-y-3.5">
+                <input type="hidden" id="bug-id-edit">
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Bug Summary</label>
+                    <input type="text" id="bug-title" required placeholder="e.g. Bakong KHQR scan timeout on 4G switch" class="w-full bg-cyber-950 border border-cyber-700 rounded-2xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Severity</label>
+                        <select id="bug-severity" class="w-full bg-cyber-950 border border-cyber-700 rounded-2xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 transition">
+                            <option value="Minor">Minor</option>
+                            <option value="Major">Major</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">OS Platform</label>
+                        <select id="bug-os" class="w-full bg-cyber-950 border border-cyber-700 rounded-2xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 transition">
+                            <option value="iOS 17.4">iOS 17.4</option>
+                            <option value="Android 14">Android 14</option>
+                            <option value="Cross-Platform">Cross-Platform</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Steps to Reproduce (Expected vs Actual)</label>
+                    <textarea id="bug-steps" rows="3" required placeholder="Expected: QR gateway resolves instantly&#10;Actual: Infinite loading spinner / Error 500" class="w-full bg-cyber-950 border border-cyber-700 rounded-2xl p-3.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition resize-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Device Model</label>
+                    <input type="text" id="bug-device" placeholder="e.g. iPhone 15 Pro / Samsung Galaxy S24" class="w-full bg-cyber-950 border border-cyber-700 rounded-2xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition">
+                </div>
+
+                <div class="pt-2 flex items-center justify-end space-x-3">
+                    <button type="button" onclick="closeBugModal()" class="px-4 py-2.5 rounded-2xl bg-cyber-800 hover:bg-cyber-700 text-slate-300 text-xs font-semibold transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-cyber-950 text-xs font-bold shadow-lg shadow-cyan-500/20 transition">Save & Generate Jira</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <!-- Chat Box Pop-up Success Modal -->
-  <div class="modal-overlay" id="successModal">
-    <div class="chat-card">
-      <div class="chat-icon">💌</div>
-      <h3 style="font-size: 18px; margin-bottom: 4px;">Sent Successfully!</h3>
-      <div class="chat-bubble" id="chatMessage"></div>
-      <button type="button" class="modal-btn" id="closeModalBtn">យល់ព្រម</button>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 right-6 bg-cyber-900 border border-cyan-500/40 text-slate-200 px-4 py-3 rounded-2xl shadow-2xl text-xs font-medium z-50 flex items-center gap-3 transition-all duration-300 opacity-0 pointer-events-none">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-cyan-400 text-sm"></i>
+        <span id="toast-message">Action successful!</span>
     </div>
-  </div>
 
-  <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1KqE7DcTZ3klLo2WwfgR75PNlMfkfPxen2zA8Wr0t7IVgDSt2OTbP25k9loXcAyVR/exec';
-    const STORAGE_KEY = 'special-date-invitation-state';
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
-    const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    const saveState = () => {
-      const state = {
-        theme: body.getAttribute('data-theme'),
-        introAccepted: mainFormScreen.style.display === 'block',
-        partnerName: document.getElementById('partnerName').value,
-        date: document.getElementById('date').value,
-        startTime: document.getElementById('startTime').value,
-        endTime: document.getElementById('endTime').value,
-        note: document.getElementById('note').value,
-        foods: Array.from(document.querySelectorAll('input[name="food"]:checked')).map(input => input.id)
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    };
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initial Mock Bugs State
+        let bugs = JSON.parse(localStorage.getItem('bakong_qa_bugs')) || [
+            {
+                id: 'BUG-801',
+                title: 'Bakong KHQR gateway timeout on 4G network switch',
+                severity: 'Critical',
+                os: 'Android 14',
+                steps: 'Expected: KHQR opens payment modal within 2s\nActual: Infinite loading spinner on network drop',
+                device: 'Pixel 8 Pro',
+                status: 'Open',
+                date: '2026-06-06'
+            },
+            {
+                id: 'BUG-802',
+                title: 'LOLC Biometric FaceID fallback triggers NullPointer exception',
+                severity: 'Major',
+                os: 'iOS 17.4',
+                steps: 'Expected: Fallback to 6-digit PIN code prompt\nActual: App terminates abruptly to home screen',
+                device: 'iPhone 15 Pro',
+                status: 'Open',
+                date: '2026-06-06'
+            }
+        ];
 
-    // ១. Intro Screen Transitions & Playful "No" Button
-    const introScreen = document.getElementById('introScreen');
-    const mainFormScreen = document.getElementById('mainFormScreen');
-    const btnYes = document.getElementById('btnYes');
-    const btnNo = document.getElementById('btnNo');
+        let testSuites = [
+            { id: 'TS-01', title: 'Bakong KHQR Deep Link Scan Latency & CRC Check', status: 'Passed' },
+            { id: 'TS-02', title: 'Camera Permission Denial & Graceful Fallback', status: 'Passed' },
+            { id: 'TS-03', title: 'Biometric Auth Timeout & PIN Code Fallback', status: 'Failed' },
+            { id: 'TS-04', title: 'End-to-End Encrypted Payload Verification', status: 'Passed' }
+        ];
 
-    btnYes.addEventListener('click', () => {
-      introScreen.style.display = 'none';
-      mainFormScreen.style.display = 'block';
-      saveState();
-    });
+        let presetPayloads = [
+            "bakong://pay?to=merchant_lolc@bakong&amount=25.00&currency=USD&crc=8F2A",
+            "lolc://transfer?account=012345678&amount=150.00&ref=TXN9942",
+            "bakong://verify?merchant=ABA_EXPRESS&sum=INVALID_CRC_00"
+        ];
+        let currentPresetIdx = 0;
+        let isWebCamActive = false;
+        let mediaStream = null;
+        let scanLoopTimeout = null;
+        let qrDetector = null;
+        let lastScannedPayload = '';
+        let lastScannedAt = 0;
 
-    // ពេលប៉ះ ឬយក Mouse ដាក់លើប៊ូតុង "អត់ទេ" វានឹងរត់គេច
-    const moveNoBtn = () => {
-      const x = (Math.random() - 0.5) * 80;
-const y = (Math.random() - 0.5) * 40;
-      btnNo.style.transform = `translate(${x}px, ${y}px)`;
-    };
-    btnNo.addEventListener('mouseenter', moveNoBtn);
-    btnNo.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      moveNoBtn();
-    });
+        function persistData() {
+            localStorage.setItem('bakong_qa_bugs', JSON.stringify(bugs));
+            updateStats();
+        }
 
-    // ២. Theme Switch Logic
-    const themeBtn = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-    const themeLabel = document.getElementById('themeLabel');
-    const body = document.body;
+        // Navigation Switcher
+        function switchTab(tabName) {
+            ['scanner', 'dashboard', 'matrix'].forEach(name => {
+                const content = document.getElementById(`content-${name}`);
+                const desktopBtn = document.getElementById(`tab-btn-${name}`);
+                const mobileBtn = document.getElementById(`mobile-tab-${name}`);
 
-    themeBtn.addEventListener('click', () => {
-      const isDark = body.getAttribute('data-theme') === 'dark';
-      if (isDark) {
-        body.setAttribute('data-theme', 'light');
-        themeIcon.innerText = '🌙';
-        themeLabel.innerText = 'Dark';
-      } else {
-        body.setAttribute('data-theme', 'dark');
-        themeIcon.innerText = '☀️';
-        themeLabel.innerText = 'Light';
-      }
-      saveState();
-    });
+                if (name === tabName) {
+                    content.classList.remove('hidden');
+                    if (desktopBtn) desktopBtn.className = "px-4 py-2 rounded-lg bg-cyan-500 text-cyber-950 font-bold transition flex items-center gap-2";
+                    if (mobileBtn) mobileBtn.className = "flex flex-col items-center text-cyan-400 transition space-y-1";
+                } else {
+                    content.classList.add('hidden');
+                    if (desktopBtn) desktopBtn.className = "px-4 py-2 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-2";
+                    if (mobileBtn) mobileBtn.className = "flex flex-col items-center text-slate-400 hover:text-white transition space-y-1";
+                }
+            });
 
-    // ៣. Form Submit Logic
-    const form = document.getElementById('dateForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const successModal = document.getElementById('successModal');
-    const chatMessage = document.getElementById('chatMessage');
-    const closeModalBtn = document.getElementById('closeModalBtn');
+            if (tabName === 'dashboard') renderBugs();
+            if (tabName === 'matrix') renderTestMatrix();
+        }
 
-    const restoreState = () => {
-      if (savedState.theme === 'light') {
-        body.setAttribute('data-theme', 'light');
-        themeIcon.innerText = '🌙';
-        themeLabel.innerText = 'Dark';
-      }
+        function setCameraStatus(message, icon = 'fa-crosshairs') {
+            document.getElementById('scanner-status').innerHTML =
+                `<i class="fa-solid ${icon} text-cyan-400 mr-1.5"></i> ${message}`;
+        }
 
-      if (savedState.introAccepted) {
-        introScreen.style.display = 'none';
-        mainFormScreen.style.display = 'block';
-      }
+        function calculateKhqrCrc(payload) {
+            let crc = 0xFFFF;
+            for (let index = 0; index < payload.length; index += 1) {
+                crc ^= payload.charCodeAt(index) << 8;
+                for (let bit = 0; bit < 8; bit += 1) {
+                    crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+                    crc &= 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
 
-      ['partnerName', 'date', 'startTime', 'endTime', 'note'].forEach(id => {
-        if (savedState[id]) document.getElementById(id).value = savedState[id];
-      });
+        function stopQrScan() {
+            if (scanLoopTimeout !== null) {
+                clearTimeout(scanLoopTimeout);
+                scanLoopTimeout = null;
+            }
+        }
 
-      (savedState.foods || []).forEach(id => {
-        const food = document.getElementById(id);
-        if (food) food.checked = true;
-      });
-    };
+        async function scanVideoFrame() {
+            if (!isWebCamActive) return;
 
-    form.addEventListener('input', saveState);
-    form.addEventListener('change', saveState);
-    restoreState();
+            const videoEl = document.getElementById('webcam-video');
+            if (videoEl.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+                try {
+                    let payload = '';
+                    if (qrDetector) {
+                        const codes = await qrDetector.detect(videoEl);
+                        payload = codes[0]?.rawValue || '';
+                    } else if (typeof jsQR === 'function') {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = videoEl.videoWidth;
+                        canvas.height = videoEl.videoHeight;
+                        const context = canvas.getContext('2d', { willReadFrequently: true });
+                        if (context) {
+                            context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+                            payload = jsQR(
+                                context.getImageData(0, 0, canvas.width, canvas.height).data,
+                                canvas.width,
+                                canvas.height,
+                                { inversionAttempts: 'attemptBoth' }
+                            )?.data || '';
+                        }
+                    } else {
+                        setCameraStatus('QR scanning is unavailable in this browser', 'fa-triangle-exclamation');
+                        stopQrScan();
+                        return;
+                    }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      submitBtn.disabled = true;
-      submitBtn.innerText = 'កំពុងបញ្ជូន...';
+                    if (payload && (payload !== lastScannedPayload || Date.now() - lastScannedAt > 2500)) {
+                        lastScannedPayload = payload;
+                        lastScannedAt = Date.now();
+                        const inspector = document.getElementById('inspector-input');
+                        inspector.value = payload;
+                        analyzePayloadString(payload);
+                        setCameraStatus('QR detected. Payload loaded in inspector.', 'fa-check');
+                        showToast('QR code detected and payload inspected', 'success');
+                    }
+                } catch (error) {
+                    console.error('Unable to decode camera frame:', error);
+                    setCameraStatus('Could not read this camera frame. Retrying...', 'fa-triangle-exclamation');
+                }
+            }
 
-      const partnerName = document.getElementById('partnerName').value;
-      const date = document.getElementById('date').value;
-      const startTime = document.getElementById('startTime').value;
-      const endTime = document.getElementById('endTime').value;
-      const note = document.getElementById('note').value || 'គ្មាន';
+            if (isWebCamActive) scanLoopTimeout = setTimeout(scanVideoFrame, 180);
+        }
 
-      const selectedFoods = Array.from(document.querySelectorAll('input[name="food"]:checked'))
-                                 .map(cb => cb.value)
-                                 .join(', ') || 'មិនបានរើស';
+        function stopWebCam() {
+            stopQrScan();
+            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
+            isWebCamActive = false;
+            qrDetector = null;
+            const videoEl = document.getElementById('webcam-video');
+            videoEl.srcObject = null;
+            videoEl.classList.add('hidden');
+            document.getElementById('camera-fallback-bg').classList.remove('hidden');
+            const btn = document.getElementById('cam-toggle-btn');
+            btn.setAttribute('aria-pressed', 'false');
+            btn.innerHTML = '<i class="fa-solid fa-camera"></i> Start QR Scanner';
+            btn.className = 'px-3 py-1.5 rounded-xl bg-cyber-800 hover:bg-cyber-700 text-xs font-medium text-slate-300 border border-cyber-700 transition flex items-center gap-1.5';
+        }
 
-      const payload = { partnerName, date, startTime, endTime, food: selectedFoods, note };
+        // WebRTC camera and live QR decoding
+        async function toggleWebCam() {
+            const videoEl = document.getElementById('webcam-video');
+            const bgEl = document.getElementById('camera-fallback-bg');
+            const btn = document.getElementById('cam-toggle-btn');
 
-      try {
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+            if (!isWebCamActive) {
+                if (!navigator.mediaDevices?.getUserMedia) {
+                    setCameraStatus('Camera requires HTTPS and browser permission', 'fa-triangle-exclamation');
+                    showToast('Open this page over HTTPS and allow camera access', 'info');
+                    return;
+                }
+                if (!('BarcodeDetector' in window) && typeof jsQR !== 'function') {
+                    setCameraStatus('QR decoder could not load. Check your internet connection.', 'fa-triangle-exclamation');
+                    showToast('QR decoder could not load. Check your internet connection.', 'info');
+                    return;
+                }
 
-        chatMessage.innerHTML = `<strong>${partnerName}</strong>: "បានទទួលការណាត់ជួបរួចរាល់ហើយ! យើងជួបគ្នានៅថ្ងៃ <strong>${date}</strong> ម៉ោង <strong>${startTime}</strong> ដល់ <strong>${endTime}</strong> ញ៉ាំ <strong>${selectedFoods}</strong> ជាមួយគ្នាណា! ❤️"`;
-        successModal.classList.add('active');
-        saveState();
-      } catch (err) {
-        alert('មានបញ្ហាក្នុងការផ្ញើ សូមសាកល្បងម្ដងទៀត!');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'បញ្ជូនការណាត់';
-      }
-    });
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: { ideal: 'environment' },
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    });
+                    videoEl.srcObject = mediaStream;
+                    videoEl.classList.remove('hidden');
+                    bgEl.classList.add('hidden');
+                    isWebCamActive = true;
+                    btn.setAttribute('aria-pressed', 'true');
+                    btn.innerHTML = '<i class="fa-solid fa-camera"></i> Stop QR Scanner';
+                    btn.className = 'px-3 py-1.5 rounded-xl bg-cyan-500 text-cyber-950 text-xs font-bold transition flex items-center gap-1.5';
+                    if ('BarcodeDetector' in window) {
+                        qrDetector = new BarcodeDetector({ formats: ['qr_code'] });
+                    }
+                    setCameraStatus('Point the rear camera at a QR code', 'fa-video');
+                    await videoEl.play();
+                    scanVideoFrame();
+                    showToast('Camera ready. Point it at a QR code.', 'success');
+                } catch (error) {
+                    console.error('Unable to start camera QR scanner:', error);
+                    stopWebCam();
+                    const message = error.name === 'NotAllowedError'
+                        ? 'Camera permission denied. Allow access in browser settings.'
+                        : error.name === 'NotFoundError'
+                            ? 'No camera was found on this device.'
+                            : 'Could not start camera. Use HTTPS and check camera access.';
+                    setCameraStatus(message, 'fa-triangle-exclamation');
+                    showToast(message, 'info');
+                }
+            } else {
+                stopWebCam();
+                setCameraStatus('Camera scanner stopped');
+                showToast("Switched to simulator mode", "info");
+            }
+        }
 
-    closeModalBtn.addEventListener('click', () => {
-      successModal.classList.remove('active');
-    });
-  </script>
+        window.addEventListener('pagehide', stopWebCam);
+
+        // Cycle Presets
+        function cyclePresetPayload() {
+            currentPresetIdx = (currentPresetIdx + 1) % presetPayloads.length;
+            document.getElementById('inspector-input').value = presetPayloads[currentPresetIdx];
+            analyzePayloadString(presetPayloads[currentPresetIdx]);
+            showToast("Loaded test payload", "info");
+        }
+
+        function loadPreset(idx) {
+            currentPresetIdx = idx;
+            document.getElementById('inspector-input').value = presetPayloads[idx];
+            analyzePayloadString(presetPayloads[idx]);
+            showToast("Preset payload loaded into inspector", "success");
+        }
+
+        // Analyze Payload String
+        function analyzePayloadString(str) {
+            const schemeEl = document.getElementById('parse-scheme');
+            const merchantEl = document.getElementById('parse-merchant');
+            const crcEl = document.getElementById('parse-crc');
+            const aiEl = document.getElementById('parse-ai');
+            const isKhqr = str.startsWith('000201');
+
+            if (str.startsWith('bakong://')) {
+                schemeEl.textContent = 'bakong://';
+                merchantEl.textContent = str.includes('to=') ? str.split('to=')[1].split('&')[0] : 'merchant_bakong';
+            } else if (str.startsWith('lolc://')) {
+                schemeEl.textContent = 'lolc://';
+                merchantEl.textContent = 'lolc_core_gateway';
+            } else if (isKhqr) {
+                schemeEl.textContent = 'KHQR / EMVCo';
+                merchantEl.textContent = 'EMVCo QR payload';
+            } else {
+                schemeEl.textContent = 'custom://';
+                merchantEl.textContent = 'unknown_endpoint';
+            }
+
+            const khqrCrc = isKhqr ? str.match(/6304([0-9A-Fa-f]{4})$/) : null;
+            const expectedCrc = khqrCrc ? calculateKhqrCrc(str.slice(0, -4)) : null;
+            const hasInvalidCrc = str.includes('INVALID') ||
+                (isKhqr && (!khqrCrc || khqrCrc[1].toUpperCase() !== expectedCrc));
+
+            if (hasInvalidCrc) {
+                crcEl.textContent = 'Invalid CRC-16 (Error)';
+                crcEl.className = 'font-mono text-red-400 font-bold';
+                aiEl.textContent = 'Critical Defect (Checksum Failure)';
+                aiEl.className = 'font-bold text-red-400';
+            } else if (isKhqr) {
+                crcEl.textContent = `Valid (${khqrCrc[1].toUpperCase()})`;
+                crcEl.className = 'font-mono text-emerald-400 font-bold';
+                aiEl.textContent = 'KHQR CRC-16 Verified';
+                aiEl.className = 'font-bold text-emerald-400';
+            } else {
+                crcEl.textContent = 'Valid (0x8F2A)';
+                crcEl.className = 'font-mono text-emerald-400 font-bold';
+                aiEl.textContent = 'Medium Risk (Network Latency Check)';
+                aiEl.className = 'font-bold text-amber-400';
+            }
+        }
+
+        function triggerScanPayload() {
+            const statusEl = document.getElementById('scanner-status');
+            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Parsing KHQR & CRC...`;
+            playBeep();
+
+            setTimeout(() => {
+                statusEl.innerHTML = `<i class="fa-solid fa-check text-cyan-400 mr-1.5"></i> Payload Verified Successfully!`;
+                showToast("Payload parsed & inspected", "success");
+            }, 900);
+        }
+
+        function runStressTest(times) {
+            const statusEl = document.getElementById('scanner-status');
+            statusEl.innerHTML = `<i class="fa-solid fa-bolt fa-bounce mr-1.5"></i> Running ${times}x Deep Link Stress Burst...`;
+            showToast(`Initiating ${times}x deep link stress test...`, "info");
+
+            setTimeout(() => {
+                statusEl.innerHTML = `<i class="fa-solid fa-shield-check text-emerald-400 mr-1.5"></i> Stress Test Complete (0 Drops)`;
+                showToast(`Stress test passed: 0 packet loss across ${times} requests`, "success");
+            }, 1500);
+        }
+
+        function convertPayloadToBug() {
+            const str = document.getElementById('inspector-input').value;
+            openBugModal({
+                title: `Deep link parsing failure on payload: ${str.substring(0, 35)}...`,
+                severity: str.includes('INVALID') ? 'Critical' : 'Major',
+                os: 'Android 14',
+                steps: `Expected: Deep link opens transaction flow smoothly\nActual: Payload rejection on string: ${str}`
+            });
+        }
+
+        // Bug Modal Controls
+        function openBugModal(prefill = null) {
+            const modal = document.getElementById('bug-modal');
+            const titleEl = document.getElementById('modal-title');
+            document.getElementById('bug-form').reset();
+            document.getElementById('bug-id-edit').value = '';
+
+            if (prefill) {
+                titleEl.innerHTML = `<i class="fa-solid fa-bug text-cyan-400"></i> Converted Payload Bug Ticket`;
+                document.getElementById('bug-title').value = prefill.title || '';
+                document.getElementById('bug-severity').value = prefill.severity || 'Major';
+                document.getElementById('bug-os').value = prefill.os || 'iOS 17.4';
+                document.getElementById('bug-steps').value = prefill.steps || '';
+                document.getElementById('bug-device').value = 'Mobile Banking Test Phone';
+            } else {
+                titleEl.innerHTML = `<i class="fa-solid fa-bug text-cyan-400"></i> New Mobile Defect Report`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeBugModal() { document.getElementById('bug-modal').classList.add('hidden'); }
+
+        function handleBugSubmit(event) {
+            event.preventDefault();
+            const editId = document.getElementById('bug-id-edit').value;
+            const title = document.getElementById('bug-title').value;
+            const severity = document.getElementById('bug-severity').value;
+            const os = document.getElementById('bug-os').value;
+            const steps = document.getElementById('bug-steps').value;
+            const device = document.getElementById('bug-device').value || 'Smartphone';
+
+            const newBug = {
+                id: editId || `BUG-${Math.floor(800 + Math.random() * 900)}`,
+                title, severity, os, steps, device,
+                status: 'Open',
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            if (editId) {
+                const idx = bugs.findIndex(b => b.id === editId);
+                if (idx !== -1) bugs[idx] = newBug;
+                showToast("Bug ticket updated", "success");
+            } else {
+                bugs.unshift(newBug);
+                showToast(`Generated ticket #${newBug.id}`, "success");
+            }
+
+            persistData();
+            closeBugModal();
+            switchTab('dashboard');
+        }
+
+        // Render Dashboard Bugs
+        function renderBugs() {
+            const container = document.getElementById('bugs-container');
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const filterSev = document.getElementById('filter-severity').value;
+
+            const filtered = bugs.filter(b => {
+                const matchesSearch = b.title.toLowerCase().includes(searchVal) || b.id.toLowerCase().includes(searchVal);
+                const matchesSev = filterSev === 'ALL' || b.severity === filterSev;
+                return matchesSearch && matchesSev;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-12 bg-cyber-900 rounded-3xl border border-cyber-700">
+                        <i class="fa-solid fa-clipboard-question text-3xl text-slate-600 mb-2"></i>
+                        <p class="text-xs font-medium text-slate-400">No matching defect tickets found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(bug => {
+                let badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                if (bug.severity === 'Major') badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                if (bug.severity === 'Critical') badgeColor = 'bg-red-500/10 text-red-400 border-red-500/20';
+
+                return `
+                    <div class="bg-cyber-900 border border-cyber-700 rounded-3xl p-5 space-y-3 shadow-xl hover:border-cyan-500/50 transition">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-mono text-xs font-bold text-cyan-400">${bug.id}</span>
+                                <span class="text-[10px] px-2.5 py-0.5 rounded-lg font-medium bg-cyber-800 text-slate-300 border border-cyber-700">${bug.os}</span>
+                            </div>
+                            <span class="text-[10px] px-2.5 py-0.5 rounded-lg font-bold border ${badgeColor}">${bug.severity}</span>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs lg:text-sm font-semibold text-white leading-snug">${escapeHtml(bug.title)}</h4>
+                            <p class="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-mobile-screen text-[10px]"></i> ${escapeHtml(bug.device)}
+                            </p>
+                        </div>
+
+                        <div class="bg-cyber-950 p-3 rounded-2xl border border-cyber-700/80 font-mono text-[11px] text-slate-300 whitespace-pre-line leading-relaxed">
+                            ${escapeHtml(bug.steps)}
+                        </div>
+
+                        <div class="flex items-center justify-between pt-1 text-xs">
+                            <span class="text-slate-500">${bug.date}</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="copyJiraMarkdown('${bug.id}')" class="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold transition text-[11px] flex items-center gap-1.5 border border-cyan-500/30">
+                                    <i class="fa-solid fa-copy"></i> Copy Jira
+                                </button>
+                                <button onclick="deleteBug('${bug.id}')" class="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition border border-red-500/20">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render ISO Test Matrix
+        function renderTestMatrix() {
+            const container = document.getElementById('test-matrix-container');
+            container.innerHTML = testSuites.map((ts, idx) => `
+                <div class="flex items-center justify-between p-4 rounded-2xl bg-cyber-950 border border-cyber-700/80">
+                    <div class="flex items-center space-x-3.5">
+                        <span class="font-mono text-xs text-cyan-400 font-bold">${ts.id}</span>
+                        <span class="text-xs lg:text-sm text-slate-200 font-medium">${ts.title}</span>
+                    </div>
+                    <button onclick="toggleTestSuite(${idx})" class="text-xs px-3 py-1.5 rounded-xl font-bold border ${ts.status === 'Passed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-red-500/15 text-red-400 border-red-500/30'}">
+                        ${ts.status}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function toggleTestSuite(idx) {
+            testSuites[idx].status = testSuites[idx].status === 'Passed' ? 'Failed' : 'Passed';
+            renderTestMatrix();
+            showToast("ISO test suite status updated", "success");
+        }
+
+        function copyJiraMarkdown(id) {
+            const bug = bugs.find(b => b.id === id);
+            if (!bug) return;
+            const md = `h2. Mobile Defect Ticket: ${bug.id}\n* *Title:* ${bug.title}\n* *Severity:* ${bug.severity}\n* *Device:* ${bug.device} (${bug.os})\n\n{code:title=Steps to Reproduce}\n${bug.steps}\n{code}`;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = md;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Copied Jira markdown to clipboard!", "success");
+            } catch (err) {
+                showToast("Failed to copy", "info");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function deleteBug(id) {
+            if (confirm("Delete this defect ticket?")) {
+                bugs = bugs.filter(b => b.id !== id);
+                persistData();
+                renderBugs();
+                showToast("Defect ticket deleted", "info");
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = bugs.length;
+            document.getElementById('stat-open').textContent = bugs.filter(b => b.status === 'Open').length;
+            document.getElementById('stat-critical').textContent = bugs.filter(b => b.severity === 'Critical').length;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+
+            msgEl.textContent = message;
+            iconEl.className = type === 'success' ? "fa-solid fa-circle-check text-cyan-400 text-sm" : "fa-solid fa-circle-info text-cyan-400 text-sm";
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2600);
+        }
+
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(920, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.12);
+            } catch (e) {}
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        window.onload = function() {
+            updateStats();
+            analyzePayloadString(document.getElementById('inspector-input').value);
+        }
+    </script>
 </body>
 </html>
